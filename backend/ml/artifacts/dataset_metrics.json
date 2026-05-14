@@ -1,0 +1,219 @@
+{
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "labels": [
+    "Low",
+    "Medium",
+    "High",
+    "Very High"
+  ],
+  "confusion_matrix": [
+    [
+      482,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      371,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      139,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      408
+    ]
+  ],
+  "report": {
+    "Low": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 482.0
+    },
+    "Medium": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 371.0
+    },
+    "High": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 139.0
+    },
+    "Very High": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 408.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1400.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1400.0
+    }
+  },
+  "feature_importances": [
+    {
+      "name": "Avg Speed (km/h)",
+      "score": 0.2878127992153168
+    },
+    {
+      "name": "Traffic Volume",
+      "score": 0.2226412147283554
+    },
+    {
+      "name": "w_rain",
+      "score": 0.16162563860416412
+    },
+    {
+      "name": "accident_flag",
+      "score": 0.1359974592924118
+    },
+    {
+      "name": "w_heavy_rain",
+      "score": 0.12658144533634186
+    },
+    {
+      "name": "Rain(mm)",
+      "score": 0.04662527143955231
+    },
+    {
+      "name": "w_clear",
+      "score": 0.0030862907879054546
+    },
+    {
+      "name": "w_cloudy",
+      "score": 0.0025401043239980936
+    },
+    {
+      "name": "loc_Lajpat Nagar",
+      "score": 0.0015613539144396782
+    },
+    {
+      "name": "loc_Cyber Hub Gurgaon",
+      "score": 0.0014713176060467958
+    },
+    {
+      "name": "loc_DND Flyway",
+      "score": 0.0013968187849968672
+    },
+    {
+      "name": "w_fog",
+      "score": 0.0012376486556604505
+    },
+    {
+      "name": "loc_Botanical Garden",
+      "score": 0.0009647022234275937
+    },
+    {
+      "name": "Public Transport Density",
+      "score": 0.0009429903002455831
+    },
+    {
+      "name": "loc_Greater Noida West",
+      "score": 0.0006984537467360497
+    },
+    {
+      "name": "hour",
+      "score": 0.0006973496056161821
+    },
+    {
+      "name": "is_rush_hour",
+      "score": 0.0006431126384995878
+    },
+    {
+      "name": "Longitude",
+      "score": 0.000642023456748575
+    },
+    {
+      "name": "day_of_week",
+      "score": 0.0006303223199211061
+    },
+    {
+      "name": "Latitude",
+      "score": 0.000622584018856287
+    },
+    {
+      "name": "loc_India Gate",
+      "score": 0.0005014784401282668
+    },
+    {
+      "name": "event_flag",
+      "score": 0.00048109798808582127
+    },
+    {
+      "name": "loc_Connaught Place",
+      "score": 0.00022037042072042823
+    },
+    {
+      "name": "loc_IGI Airport T3",
+      "score": 0.00021516127162612975
+    },
+    {
+      "name": "loc_Sector 18 Noida",
+      "score": 0.00016296083049383014
+    },
+    {
+      "name": "is_weekend",
+      "score": 0.0
+    },
+    {
+      "name": "loc_Akshardham Route",
+      "score": 0.0
+    },
+    {
+      "name": "loc_Dwarka Sector 21",
+      "score": 0.0
+    },
+    {
+      "name": "loc_Karol Bagh",
+      "score": 0.0
+    },
+    {
+      "name": "loc_MG Road Gurgaon",
+      "score": 0.0
+    },
+    {
+      "name": "loc_Pari Chowk",
+      "score": 0.0
+    },
+    {
+      "name": "loc_Sector 62 Noida",
+      "score": 0.0
+    },
+    {
+      "name": "loc_Vaishali Ghaziabad",
+      "score": 0.0
+    }
+  ],
+  "class_distribution": {
+    "Low": 2409,
+    "Medium": 1854,
+    "High": 697,
+    "Very High": 2040
+  },
+  "n_samples": 7000,
+  "n_features": 33,
+  "n_locations": 16,
+  "trained_at": "2026-05-14T15:48:40.687210+00:00"
+}

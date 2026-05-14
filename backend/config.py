@@ -1,4 +1,4 @@
-"""Application configuration — loads from environment / .env."""
+"""Application configuration -- loads from environment / .env."""
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,8 +9,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
 
     # Supabase Postgres connection string.
-    # Transaction pooler (port 6543) recommended for FastAPI:
-    #   postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
     database_url: str = "postgresql://postgres:postgres@localhost:5432/postgres"
 
     # Supabase project metadata (informational / optional client use)
@@ -19,7 +17,7 @@ class Settings(BaseSettings):
 
     # API
     api_prefix: str = "/api"
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # ML model artifacts
     model_dir: str = "ml/artifacts"
@@ -27,9 +25,18 @@ class Settings(BaseSettings):
     # WebSocket live-update interval (seconds)
     live_update_interval: int = 30
 
+    # LLM (Groq) -- optional. If missing, /api/chat falls back to the
+    # rule-based bot so the demo still works.
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def has_groq(self) -> bool:
+        return bool(self.groq_api_key and not self.groq_api_key.startswith("<"))
 
 
 @lru_cache

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Icons } from "@/components/icons";
 import { CityMap } from "@/components/MapSlot";
 import { Card } from "@/components/ui";
 import { api } from "@/lib/api";
 import { EMERGENCY_JUNCTIONS } from "@/lib/data";
 import type { SignalJunction, VehicleType } from "@/lib/types";
+import { toast } from "@/components/Toast";
 
 interface EmergencyResponse {
   vehicle_type: string; origin: string; destination: string;
@@ -18,9 +20,11 @@ interface EmergencyResponse {
   advisory: string;
 }
 
+const fade = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
+
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "6px 0", borderBottom: "1px solid var(--border-subtle)" }}>
       <span className="t-meta" style={{ fontSize: 12.5 }}>{k}</span>
       <span style={{ fontSize: 13, color: "var(--text-primary)", textAlign: "right" }}>{v}</span>
     </div>
@@ -33,6 +37,7 @@ export default function EmergencyPage() {
   const [to, setTo] = useState("Max Hospital, Saket");
   const [cleared, setCleared] = useState(true);
   const [plan, setPlan] = useState<EmergencyResponse | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const vehicles: { id: VehicleType; label: string; Icon: typeof Icons.Amb }[] = [
     { id: "ambulance", label: "Ambulance", Icon: Icons.Amb },
@@ -41,12 +46,18 @@ export default function EmergencyPage() {
   ];
 
   const clearPath = async () => {
+    setBusy(true);
     try {
       const res = (await api.emergencyRoute({
         vehicle_type: vtype, origin: from, destination: to,
       })) as EmergencyResponse;
       setPlan(res);
-    } catch { /* keep design defaults on failure */ }
+      toast(`Path cleared — ${res.junctions.length} junctions pre-empted`, "success");
+    } catch {
+      toast("Backend unreachable — using cached plan", "danger");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const etaWith = plan?.eta_with_clearance_min ?? 7.5;
@@ -57,23 +68,18 @@ export default function EmergencyPage() {
     : EMERGENCY_JUNCTIONS;
 
   return (
-    <div
-      data-screen-label="04 Emergency"
-      className="screen"
-      style={{ padding: "14px 16px 16px", gap: 12, display: "flex", flexDirection: "column" }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "4px 4px 8px" }}>
+    <div className="page" data-screen-label="04 Emergency">
+      <motion.div initial="hidden" animate="show" variants={fade} transition={{ duration: 0.35 }}
+        style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 12 }}
+      >
         <div>
-          <div
-            className="t-hero"
-            style={{
-              background: "linear-gradient(90deg, var(--accent) 0%, #F4F4F5 60%)",
-              WebkitBackgroundClip: "text", backgroundClip: "text",
-              color: "transparent",
-            }}
-          >Emergency Routing</div>
-          <div className="t-meta" style={{ marginTop: 10 }}>
-            Priority-cleared corridor with cascading signal pre-emption · authorised dispatchers only.
+          <div className="t-section">Emergency</div>
+          <div className="t-hero" style={{ marginTop: 6,
+            background: "linear-gradient(90deg, var(--accent) 0%, #F4F4F5 60%)",
+            WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+          }}>Priority Corridor</div>
+          <div className="t-meta" style={{ marginTop: 10, maxWidth: 540 }}>
+            Cascading signal pre-emption for ambulance, fire, and police units. Authorised dispatchers only.
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -82,16 +88,13 @@ export default function EmergencyPage() {
             background: "var(--accent-soft)", color: "var(--accent)",
             border: "1px solid rgba(232,132,60,0.25)", fontSize: 11.5, fontWeight: 500,
             letterSpacing: "0.04em", textTransform: "uppercase",
-          }}>● Active Mission · Code A</span>
+          }} className="pulse-soft">● Active Mission · Code A</span>
         </div>
-      </div>
+      </motion.div>
 
-      <div
-        className="emergency-grid"
-        style={{ display: "grid", gridTemplateColumns: "300px 1fr 320px", gap: 12, flex: 1, minHeight: 0 }}
-      >
+      <div className="emergency-grid" style={{ display: "grid", gridTemplateColumns: "320px 1fr 360px", gap: 14 }}>
         {/* Left: planner */}
-        <div className="col scroll" style={{ gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Card>
             <div className="t-meta" style={{ marginBottom: 12 }}>Vehicle type</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
@@ -108,7 +111,7 @@ export default function EmergencyPage() {
                       border: a ? "1px solid rgba(232,132,60,0.30)" : "1px solid var(--border-subtle)",
                       color: a ? "var(--accent)" : "var(--text-secondary)",
                       display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer",
-                      transition: "background .15s ease, color .15s ease",
+                      transition: "all .15s ease",
                     }}
                   >
                     <Icon size={20} />
@@ -131,54 +134,41 @@ export default function EmergencyPage() {
                 <input value={to} onChange={(e) => setTo(e.target.value)} />
               </div>
             </div>
-            <button
-              className="btn btn-primary"
-              style={{ width: "100%", marginTop: 14 }}
-              onClick={clearPath}
-            >
-              <Icons.Sparkles size={14} /> Clear Path
+            <button className="btn btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={clearPath} disabled={busy}>
+              <Icons.Sparkles size={14} /> {busy ? "Clearing…" : "Clear Path"}
             </button>
-            <button className="btn btn-ghost" style={{ width: "100%", marginTop: 8 }}>Save as template</button>
+            <button className="btn btn-ghost" style={{ width: "100%", marginTop: 8 }}
+              onClick={() => { localStorage.setItem("emergency-template", JSON.stringify({ vtype, from, to })); toast("Template saved locally", "success"); }}>
+              Save as template
+            </button>
+            <button className="btn btn-ghost" style={{ width: "100%", marginTop: 8 }}
+              onClick={() => {
+                const t = localStorage.getItem("emergency-template");
+                if (!t) return toast("No template saved yet");
+                const p = JSON.parse(t);
+                setVtype(p.vtype); setFrom(p.from); setTo(p.to);
+                toast("Template loaded");
+              }}>
+              Load template
+            </button>
           </Card>
 
           <Card>
             <div className="t-meta" style={{ marginBottom: 8 }}>Mission Brief</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <Row k="Patient" v="Cardiac · Priority 1" />
-              <Row k="Distance" v="7.8 km" />
-              <Row k="Signals on path" v="7 junctions" />
-              <Row k="Crew" v="EMT-2 · Driver-7" />
-              <Row k="Hospital bed" v="Confirmed · ICU-3" />
-            </div>
+            <Row k="Patient" v="Cardiac · Priority 1" />
+            <Row k="Distance" v={`${plan?.distance_km ?? 7.8} km`} />
+            <Row k="Signals on path" v={`${junctions.length} junctions`} />
+            <Row k="Crew" v="EMT-2 · Driver-7" />
+            <Row k="Hospital bed" v="Confirmed · ICU-3" />
           </Card>
         </div>
 
         {/* Center map */}
-        <div className="col" style={{ minHeight: 0, position: "relative", pointerEvents: "none" }}>
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <CityMap showLegend={false} />
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <CityMap height={560} />
 
-          <div
-            className="glass"
-            style={{
-              position: "absolute", left: 18, top: 18, padding: "12px 14px",
-              display: "flex", alignItems: "center", gap: 12,
-              borderColor: "rgba(232,132,60,0.32)", pointerEvents: "auto",
-            }}
-          >
-            <span
-              style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--accent)" }}
-              className="pulse-soft"
-            />
-            <div>
-              <div style={{ fontSize: 12, color: "var(--text-primary)" }}>Priority corridor live</div>
-              <div className="t-tick">Cascading 7 signals · ambulance unit AMB-12</div>
-            </div>
-          </div>
-
-          <div style={{ position: "absolute", left: 18, right: 18, bottom: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, pointerEvents: "auto" }}>
-            <div className="glass" style={{ padding: 16, borderColor: "rgba(255,255,255,0.10)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <Card style={{ borderColor: "var(--border-strong)" }}>
               <div className="t-label">ETA · Without clearance</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 6 }}>
                 <span
@@ -188,28 +178,25 @@ export default function EmergencyPage() {
                 <span className="t-meta">min</span>
               </div>
               <div className="t-tick" style={{ marginTop: 4 }}>standard urban flow</div>
-            </div>
-            <div
-              className="glass"
-              style={{ padding: 16, borderColor: "rgba(232,132,60,0.35)", background: "rgba(40, 24, 16, 0.78)" }}
-            >
+            </Card>
+            <Card style={{ borderColor: "rgba(232,132,60,0.35)", background: "rgba(40, 24, 16, 0.78)" }}>
               <div className="t-label" style={{ color: "var(--accent)" }}>ETA · With clearance</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 6 }}>
                 <span className="t-stat tabular" style={{ color: "var(--accent)" }}>{etaWith}</span>
                 <span className="t-meta">min · saves {saved} min</span>
               </div>
               <div className="t-tick" style={{ marginTop: 4, color: "var(--accent)" }}>signal pre-emption active</div>
-            </div>
+            </Card>
           </div>
         </div>
 
         {/* Right: signal pre-emption */}
-        <div className="col scroll" style={{ gap: 12, minHeight: 0 }}>
-          <Card style={{ padding: 0, overflow: "hidden", flex: "none" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Card style={{ padding: 0, overflow: "hidden" }}>
             <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
                 <div className="t-title">Signal Pre-emption</div>
-                <div className="t-tick" style={{ marginTop: 3 }}>7 junctions · cascading</div>
+                <div className="t-tick" style={{ marginTop: 3 }}>{junctions.length} junctions · cascading</div>
               </div>
               <button
                 onClick={() => setCleared((c) => !c)}
@@ -218,11 +205,12 @@ export default function EmergencyPage() {
                   background: cleared ? "var(--accent-soft)" : "var(--bg-surface-2)",
                   color: cleared ? "var(--accent)" : "var(--text-secondary)",
                   border: `1px solid ${cleared ? "rgba(232,132,60,0.25)" : "var(--border-subtle)"}`,
+                  cursor: "pointer",
                 }}
               >{cleared ? "Auto · ON" : "Manual"}</button>
             </div>
 
-            <div className="scroll" style={{ maxHeight: "calc(100vh - 360px)" }}>
+            <div>
               {junctions.map((j, i) => {
                 const stateColor =
                   j.state === "cleared" ? "var(--success)" :
@@ -255,9 +243,7 @@ export default function EmergencyPage() {
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, color: "var(--text-primary)" }}>{j.name}</div>
-                      <div className="t-tick" style={{ marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {j.cmd}
-                      </div>
+                      <div className="t-tick" style={{ marginTop: 3 }}>{j.cmd}</div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div className="tabular" style={{ fontSize: 12, color: stateColor }}>{j.offsetSec}</div>
@@ -275,11 +261,47 @@ export default function EmergencyPage() {
               <span style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>System advisory</span>
             </div>
             <div style={{ fontSize: 13, color: "var(--text-primary)", marginTop: 8, lineHeight: 1.5 }}>
-              Re-route opposing flow at <span style={{ color: "var(--accent)" }}>Yusuf Sarai</span> to absorb the 38-second hold without spillback.
+              {plan?.advisory || "Re-route opposing flow at Yusuf Sarai to absorb the 38-second hold without spillback."}
             </div>
-            <button className="btn btn-ghost" style={{ marginTop: 12, width: "100%" }}>Apply advisory</button>
+            <button className="btn btn-ghost" style={{ marginTop: 12, width: "100%" }}
+              onClick={() => toast("Advisory applied to dispatch system", "success")}>
+              Apply advisory
+            </button>
           </Card>
         </div>
+      </div>
+
+      {/* Mission history */}
+      <div className="section">
+        <div className="section-head">
+          <div>
+            <div className="t-section">Mission Log</div>
+            <div className="t-title" style={{ marginTop: 4 }}>Recent Code-A Dispatches</div>
+          </div>
+        </div>
+        <Card style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "120px 130px 1fr 120px 80px", padding: "12px 18px", borderBottom: "1px solid var(--border-subtle)" }}>
+            <span className="t-label">Code</span>
+            <span className="t-label">Vehicle</span>
+            <span className="t-label">Route</span>
+            <span className="t-label">ETA</span>
+            <span className="t-label" style={{ textAlign: "right" }}>Saved</span>
+          </div>
+          {[
+            { code: "A-0421", veh: "Ambulance",  rt: "AIIMS → Max Saket",           eta: "7.5 min",  saved: "10.5m" },
+            { code: "A-0420", veh: "Fire",       rt: "Saket Fire Stn → Vasant Kunj", eta: "9.2 min",  saved: "8.4m" },
+            { code: "A-0419", veh: "Police",     rt: "Vasant Vihar → Janakpuri",     eta: "12.1 min", saved: "6.7m" },
+            { code: "A-0418", veh: "Ambulance",  rt: "Apollo → Mahaveer Enclave",    eta: "8.8 min",  saved: "9.2m" },
+          ].map((m, i) => (
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "120px 130px 1fr 120px 80px", padding: "14px 18px", borderBottom: "1px solid var(--border-subtle)", alignItems: "center" }}>
+              <span style={{ fontSize: 13, color: "var(--accent)", fontVariantNumeric: "tabular-nums" }}>{m.code}</span>
+              <span className="t-meta">{m.veh}</span>
+              <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{m.rt}</span>
+              <span style={{ fontSize: 13, fontVariantNumeric: "tabular-nums" }}>{m.eta}</span>
+              <span style={{ fontSize: 12, color: "var(--success)", textAlign: "right" }}>{m.saved}</span>
+            </div>
+          ))}
+        </Card>
       </div>
     </div>
   );
