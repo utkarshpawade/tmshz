@@ -17,7 +17,8 @@ RUN chmod +x entrypoint.sh
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=15s --timeout=4s --start-period=20s --retries=4 \
-    CMD curl -fs http://localhost:8000/api/health || exit 1
+# Honors $PORT when the host injects one (Render), else 8000 for local runs.
+HEALTHCHECK --interval=15s --timeout=4s --start-period=25s --retries=4 \
+    CMD curl -fs "http://localhost:${PORT:-8000}/api/health" || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]

@@ -36,5 +36,8 @@ if [ "${TRAIN_ON_STARTUP:-false}" = "true" ]; then
   fi
 fi
 
-echo "[entrypoint] Starting FastAPI on :8000"
-exec uvicorn main:app --host 0.0.0.0 --port 8000
+# Render (and most PaaS hosts) inject the port to bind via $PORT.
+# Fall back to 8000 for local Docker runs.
+PORT="${PORT:-8000}"
+echo "[entrypoint] Starting FastAPI on :${PORT}"
+exec uvicorn main:app --host 0.0.0.0 --port "${PORT}"
