@@ -1,0 +1,25 @@
+# env
+.env
+.env.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+backend/ml/artifacts/*.pkl
+backend/ml/artifacts/*.joblib
+
+# node / next
+node_modules/
+.next/
+out/
+npm-debug.log*
+frontend/.env*.local
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
