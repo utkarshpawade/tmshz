@@ -12,8 +12,10 @@ router = APIRouter(tags=["chat"])
 async def chat(req: ChatRequest) -> StreamingResponse:
     """Stream the bot reply token-by-token as text/plain chunks."""
 
+    history = [t.model_dump() for t in (req.history or [])]
+
     async def streamer():
-        async for chunk in stream_reply(req.message):
+        async for chunk in stream_reply(req.message, history=history):
             if chunk:
                 yield chunk
 

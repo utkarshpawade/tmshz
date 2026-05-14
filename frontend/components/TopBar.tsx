@@ -226,7 +226,7 @@ export function TopBar() {
             fontSize: 12, fontWeight: 600, marginLeft: 4,
             display: "grid", placeItems: "center", cursor: "pointer",
           }}
-        >RK</button>
+        >SS</button>
         {showProfile && (
           <>
             <div onClick={() => setShowProfile(false)} style={{ position: "fixed", inset: 0, zIndex: 60 }} />
@@ -242,7 +242,7 @@ export function TopBar() {
               }}
             >
               <div style={{ padding: "10px 12px", borderBottom: "1px solid var(--border-subtle)", marginBottom: 6 }}>
-                <div style={{ fontSize: 13, color: "var(--text-primary)" }}>Rajiv Kapoor</div>
+                <div style={{ fontSize: 13, color: "var(--text-primary)" }}>Sunil Sharma</div>
                 <div className="t-tick">Dispatch Lead · Delhi NCR</div>
               </div>
               {[

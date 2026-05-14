@@ -4,6 +4,9 @@
 
 @import "leaflet/dist/leaflet.css";
 
+/* Display serif for editorial titles (bold italic) */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,700;1,500;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* =========================================================
    AI Traffic -- Command Center Tokens & Base (v2)
    - Long-scrollable shell
@@ -96,15 +99,35 @@ button {
 }
 
 /* === Typography utilities === */
-.t-hero { font-size: 48px; font-weight: 300; letter-spacing: -0.02em; line-height: 1.05; color: var(--text-primary); }
+.t-hero {
+  font-family: 'Fraunces', 'Inter', serif;
+  font-size: 52px; font-weight: 700; font-style: italic;
+  letter-spacing: -0.025em; line-height: 1.02;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-2) 60%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .t-stat { font-size: 44px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; color: var(--text-primary); }
 .t-stat-sm { font-size: 28px; font-weight: 300; letter-spacing: -0.01em; line-height: 1; color: var(--text-primary); }
-.t-title { font-size: 16px; font-weight: 500; color: var(--text-primary); letter-spacing: -0.005em; }
+.t-title {
+  font-family: 'Fraunces', 'Inter', serif;
+  font-size: 17px; font-weight: 700; font-style: italic;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
 .t-body { font-size: 14px; font-weight: 400; color: var(--text-primary); }
 .t-meta { font-size: 13px; font-weight: 400; color: var(--text-secondary); }
-.t-label { font-size: 11px; font-weight: 400; letter-spacing: 0.04em; color: var(--text-tertiary); text-transform: uppercase; }
+.t-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: var(--text-tertiary); text-transform: uppercase; }
 .t-tick { font-size: 10px; font-weight: 400; color: var(--text-tertiary); letter-spacing: 0.02em; }
-.t-section { font-size: 11px; font-weight: 500; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; }
+.t-section {
+  font-family: 'Fraunces', serif;
+  font-size: 12px; font-weight: 700; font-style: italic;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
 
 .text-sec { color: var(--text-secondary); }
 .text-ter { color: var(--text-tertiary); }
@@ -130,16 +153,11 @@ button {
 .card-interactive { cursor: pointer; }
 .card-interactive:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.30); }
 
+/* Card arrow removed by request — hidden globally but kept in the DOM
+   so existing components that pass arrow={true} don't blow up. */
 .card-arrow {
-  position: absolute;
-  top: 14px; right: 14px;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  display: grid; place-items: center;
-  color: var(--text-tertiary);
-  transition: color .15s ease, background .15s ease;
+  display: none !important;
 }
-.card:hover .card-arrow { color: var(--text-primary); }
 
 /* === Pills / nav === */
 .pill-row { display: inline-flex; gap: 4px; padding: 4px; background: transparent; border-radius: var(--r-pill); }
@@ -393,6 +411,23 @@ body::-webkit-scrollbar-track { background: var(--bg-base); }
   to { stroke-dashoffset: -1000; }
 }
 
+/* Highway polyline animation — flowing centerline dashes that suggest
+   direction of traffic. Applied via className on the Leaflet path. */
+.leaflet-overlay-pane path.hwy-flow {
+  animation: dashshift 22s linear infinite;
+  filter: drop-shadow(0 0 1px rgba(255,255,255,0.55));
+  pointer-events: none;
+}
+.leaflet-overlay-pane path.hwy-surface {
+  transition: stroke-width .2s ease, stroke-opacity .2s ease;
+  filter: drop-shadow(0 1px 1.5px rgba(0,0,0,0.55));
+  cursor: pointer;
+}
+@keyframes hwy-pulse {
+  0%, 100% { stroke-opacity: 0.92; }
+  50%      { stroke-opacity: 1.00; }
+}
+
 @keyframes glow-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232,132,60,0.55); }
   50%      { box-shadow: 0 0 0 12px rgba(232,132,60,0); }
@@ -407,7 +442,10 @@ body::-webkit-scrollbar-track { background: var(--bg-base); }
   background-size: 25% 25%;
 }
 
-/* === Map === */
+/* === Map ===
+   Important: the map is wrapped in its OWN stacking context (isolation),
+   so its internal Leaflet panes (which use very high z-index values) never
+   leak above the sticky navbar or any global overlays. */
 .map-wrap {
   position: relative;
   width: 100%;
@@ -415,7 +453,19 @@ body::-webkit-scrollbar-track { background: var(--bg-base); }
   overflow: hidden;
   border: 1px solid var(--border-subtle);
   background: #0a0d0c;
+  isolation: isolate;
+  z-index: 0;
+  contain: paint;
 }
+.map-wrap .leaflet-container,
+.map-wrap .leaflet-pane,
+.map-wrap .leaflet-top,
+.map-wrap .leaflet-bottom { z-index: auto !important; }
+.map-wrap .leaflet-pane.leaflet-tile-pane { z-index: 1 !important; }
+.map-wrap .leaflet-pane.leaflet-overlay-pane { z-index: 2 !important; }
+.map-wrap .leaflet-pane.leaflet-marker-pane { z-index: 3 !important; }
+.map-wrap .leaflet-pane.leaflet-tooltip-pane { z-index: 4 !important; }
+.map-wrap .leaflet-pane.leaflet-popup-pane { z-index: 5 !important; }
 .map-host {
   width: 100%; height: 100%;
   cursor: grab;
@@ -438,18 +488,30 @@ body::-webkit-scrollbar-track { background: var(--bg-base); }
   pointer-events: auto;
 }
 .map-ctrl button {
-  width: 36px; height: 36px;
+  min-width: 38px; height: 38px;
+  padding: 0 12px;
   border-radius: 10px;
   background: var(--bg-glass-strong);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
-  display: grid; place-items: center;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px;
+  font-size: 12px; font-weight: 500;
+  white-space: nowrap;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: all .15s ease;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .1s ease;
 }
 .map-ctrl button:hover { background: var(--bg-surface-2); border-color: var(--border-strong); }
-.map-ctrl button.is-active { background: var(--accent); color: #0C0C0D; border-color: var(--accent); }
+.map-ctrl button:active { transform: translateY(0.5px); }
+.map-ctrl button.is-active {
+  background: var(--accent);
+  color: #0C0C0D;
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(232,132,60,0.30);
+}
+/* Icon-only zoom controls keep the square footprint */
+.map-ctrl.is-zoom button { min-width: 38px; padding: 0; }
 
 /* Leaflet popup styling */
 .leaflet-popup-content-wrapper {
@@ -587,20 +649,149 @@ input[type=range]::-moz-range-thumb {
   box-shadow: 0 40px 90px rgba(0,0,0,0.6);
 }
 
-/* Toast / notification */
-.toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  z-index: 120;
-  padding: 12px 18px;
-  background: var(--bg-glass-strong);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-pill);
-  color: var(--text-primary);
-  font-size: 13px;
-  display: inline-flex; align-items: center; gap: 8px;
-  box-shadow: 0 18px 40px rgba(0,0,0,0.5);
-  animation: fadeup .25s ease both;
+/* === Toast / notification (centered top, glass card + glow rail) === */
+.toast-host {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 140;
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: center;
+  width: max-content; max-width: calc(100vw - 32px);
+  pointer-events: none;
 }
+.toast {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 12px;
+  min-width: 280px; max-width: 460px;
+  padding: 12px 18px 12px 16px;
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 18px 48px rgba(0,0,0,0.55),
+    0 0 0 1px var(--toast-accent, var(--accent)) inset;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.toast::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--toast-accent, var(--accent)), transparent);
+  filter: blur(0.5px);
+}
+.toast::after {
+  content: "";
+  position: absolute; left: 0; bottom: 0;
+  height: 2px; width: 100%;
+  background: var(--toast-accent, var(--accent));
+  transform-origin: left center;
+  animation: toast-bar 3.4s linear forwards;
+}
+.toast .toast-icon {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--toast-accent, var(--accent)) 18%, transparent);
+  color: var(--toast-accent, var(--accent));
+  flex: none;
+}
+.toast.toast-success { --toast-accent: var(--success); }
+.toast.toast-danger  { --toast-accent: var(--danger); }
+.toast.toast-info    { --toast-accent: var(--info); }
+.toast.toast-default { --toast-accent: var(--accent); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-14px) scale(0.96); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateY(0)    scale(1); }
+  to   { opacity: 0; transform: translateY(-8px) scale(0.97); }
+}
+@keyframes toast-bar {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.toast-enter { animation: toast-in .32s cubic-bezier(.2,.9,.3,1.2) both; }
+.toast-exit  { animation: toast-out .25s ease both; }
+
+/* === Logo wordmark (VeloCT + subscript) === */
+.logo-word {
+  display: inline-flex; flex-direction: column;
+  line-height: 1; margin-left: 4px;
+}
+.logo-name {
+  font-family: 'Fraunces', 'Inter', serif;
+  font-weight: 700; font-style: italic;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.logo-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* === KPI heatmap (mini calendar/intensity grid) === */
+.kpi-heat {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 3px;
+  margin-top: 10px;
+}
+.kpi-heat .cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--bg-surface-2);
+  transition: transform .2s ease, box-shadow .2s ease;
+  cursor: pointer;
+}
+.kpi-heat .cell:hover {
+  transform: scale(1.6);
+  z-index: 2;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+}
+.kpi-heat-legend {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 10px;
+  font-size: 10px; color: var(--text-tertiary);
+}
+.kpi-heat-legend .swatch {
+  width: 12px; height: 12px; border-radius: 3px;
+}
+
+/* Light-mode skin for the map (toggled by .light-map on .map-wrap) */
+.map-wrap.light-map { background: #eef2f5; }
+.map-wrap.light-map .leaflet-control-attribution {
+  background: rgba(255,255,255,0.85);
+  color: #555;
+}
+.map-wrap.light-map .incident-mark::after,
+.map-wrap.light-map .warning-mark::after,
+.map-wrap.light-map .sensor-mark::after,
+.map-wrap.light-map .hotspot-mark span {
+  box-shadow: 0 0 0 2px #fff !important;
+}
+
+/* (Mobile vs desktop shell is now picked by JS in AppShell — no CSS toggle.) */
 
 /* === Responsive === */
 @media (max-width: 1100px) {
@@ -615,4 +806,169 @@ input[type=range]::-moz-range-thumb {
   .topbar .search { display: none; }
   .t-hero { font-size: 36px; }
   .page { padding: 18px 16px 60px; }
+}
+
+/* === Mobile UI primitives === */
+.m-shell {
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(232,132,60,0.10), transparent 60%),
+    radial-gradient(140% 90% at 0% 100%, rgba(79,182,242,0.06), transparent 60%),
+    var(--bg-base);
+  padding-bottom: 84px;
+}
+.m-appbar {
+  position: sticky; top: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  background: rgba(12,12,13,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.m-appbar .m-brand {
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.m-appbar .m-brand .logo-mark { width: 32px; height: 32px; border-radius: 9px; }
+.m-screen { padding: 16px 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+.m-greet {
+  font-family: 'Fraunces', serif;
+  font-style: italic; font-weight: 700;
+  font-size: 28px; line-height: 1.05;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-2) 70%, var(--accent) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.m-sub { color: var(--text-secondary); font-size: 13px; margin-top: 4px; }
+.m-kpis {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.m-kpi {
+  position: relative; overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 14px;
+}
+.m-kpi .label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; }
+.m-kpi .value {
+  font-family: 'Fraunces', serif; font-weight: 700; font-style: italic;
+  font-size: 28px; margin-top: 6px; letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.m-kpi .unit { font-size: 12px; color: var(--text-secondary); margin-left: 4px; }
+.m-kpi .glow {
+  position: absolute; inset: -40% -40% auto auto;
+  width: 140px; height: 140px; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--accent-soft), transparent 70%);
+  pointer-events: none;
+}
+.m-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 16px;
+}
+.m-card .m-card-title {
+  font-family: 'Fraunces', serif;
+  font-style: italic; font-weight: 700;
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.m-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.m-row:last-child { border-bottom: none; }
+.m-row .name { font-size: 14px; color: var(--text-primary); }
+.m-row .meta { font-size: 11px; color: var(--text-tertiary); }
+.m-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.m-tabbar {
+  position: fixed; left: 12px; right: 12px; bottom: 12px;
+  z-index: 70;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 8px 6px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+}
+.m-tabbar a {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 4px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: color .15s ease, background .15s ease;
+}
+.m-tabbar a.is-active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.m-fab {
+  position: fixed; right: 16px; bottom: 84px;
+  z-index: 75;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #c45a18);
+  color: #0C0C0D;
+  display: grid; place-items: center;
+  box-shadow: 0 14px 28px rgba(232,132,60,0.42);
+  border: 1px solid var(--accent);
+}
+.m-heat {
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px;
+  margin-top: 10px;
+}
+.m-heat .cell { aspect-ratio: 1; border-radius: 4px; background: var(--bg-surface-2); }
+
+/* === Mobile-only tweaks (≤768px) =========================================
+   Fixes for narrow viewports — no effect on desktop. */
+@media (max-width: 768px) {
+  /* Prevent any horizontal overflow on routes/analytics/etc. */
+  html, body { overflow-x: hidden; max-width: 100vw; }
+  .page, .page-tight { padding: 16px 14px 96px; max-width: 100%; width: 100%; }
+  .page > *, .page-tight > * { max-width: 100%; min-width: 0; }
+  /* When the page is wrapped by the mobile shell wrapper, zero its padding
+     so we don't double-pad and create a right-side gap. */
+  .m-screen-flush { padding: 0 !important; }
+  /* Search/input controls inside cards must shrink */
+  .search { width: 100% !important; max-width: 100% !important; }
+  /* Charts and cards must never push beyond the viewport */
+  .card, .card-tight, .card-lg { max-width: 100%; }
+  .recharts-responsive-container { max-width: 100% !important; }
+
+  /* Map control buttons — stack & shrink so they never overlap */
+  .map-ctrl { flex-direction: column !important; gap: 6px; max-width: calc(100% - 24px); }
+  .map-ctrl button {
+    min-width: 34px; height: 32px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+  .map-ctrl button span { font-size: 10px !important; }
+  /* Hide the on-map flow legend on phones — it competes with the toggles */
+  .map-wrap .map-legend { display: none !important; }
+  /* Light the zoom column up smaller too */
+  .map-ctrl.is-zoom button { min-width: 34px; height: 32px; }
+
+  /* Float the TrafficBot AI launcher ABOVE the mobile tab bar */
+  .traffic-bot-launcher { bottom: 96px !important; right: 16px !important; }
+  /* Make sure the chat panel also respects the lifted launcher */
+  .traffic-bot-panel { bottom: 168px !important; }
 }

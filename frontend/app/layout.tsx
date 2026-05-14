@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 
-import { TopBar } from "@/components/TopBar";
+import { AppShell } from "@/components/AppShell";
 import { TrafficBot } from "@/components/TrafficBot";
 import { ToastHost } from "@/components/Toast";
 
@@ -16,19 +16,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Smart Traffic — AI Congestion Predictor",
+  title: "VeloCT — AI-powered Traffic Congestion Predictor",
   description:
-    "AI-powered Delhi NCR traffic congestion predictor. Live command center with route comparison, alert feed, emergency routing, ML analytics, and a Groq-powered chatbot.",
+    "VeloCT — AI-powered Delhi NCR Traffic Congestion Predictor. Live command center with route comparison, alert feed, emergency routing, ML analytics, and a Groq-powered chatbot.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        <div className="shell">
-          <TopBar />
-          <main className="screen">{children}</main>
-        </div>
+        <AppShell>{children}</AppShell>
         <TrafficBot />
         <ToastHost />
       </body>

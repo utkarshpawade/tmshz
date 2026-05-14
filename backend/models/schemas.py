@@ -168,5 +168,11 @@ class EmergencyResponse(BaseModel):
 
 
 # ---- Chat ------------------------------------------------------------------
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
+    history: Optional[list[ChatTurn]] = None

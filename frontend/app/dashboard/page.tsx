@@ -8,6 +8,7 @@ import {
   ForecastChart, Gauge, Sparkline, StreamChart,
 } from "@/components/charts";
 import { Card, CountBadge, StatusBadge } from "@/components/ui";
+import { KpiHeatmap } from "@/components/KpiHeatmap";
 import { api, type HeatmapHighRiskZone, type StatsResponse } from "@/lib/api";
 import {
   EFFICIENCY_SERIES, EFFICIENCY_X_LABELS,
@@ -24,7 +25,10 @@ export default function DashboardPage() {
   const [risk, setRisk] = useState<HeatmapHighRiskZone[] | null>(null);
   const [simBanner, setSimBanner] = useState<string | null>(null);
   const [simBusy, setSimBusy] = useState(false);
-  const [now, setNow] = useState<string>(() => new Date().toLocaleTimeString());
+  // Empty on SSR — populated on the client in the effect below. Prevents the
+  // "Text content did not match" hydration error when the server renders
+  // time T and the client hydrates at T+1.
+  const [now, setNow] = useState<string>("");
   const { tick } = useLive();
 
   const refresh = () => {
@@ -34,6 +38,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     refresh();
+    setNow(new Date().toLocaleTimeString());
     const t = setInterval(() => setNow(new Date().toLocaleTimeString()), 1000);
     const r = setInterval(refresh, 15000);
     return () => { clearInterval(t); clearInterval(r); };
@@ -75,11 +80,20 @@ export default function DashboardPage() {
     [risk],
   );
 
-  const kpis = [
-    { label: "Avg speed", value: stats?.avg_speed_kmh?.toFixed(0) ?? "26", unit: "km/h", trend: "+2%", good: true, icon: <Icons.Car size={14} /> },
-    { label: "Active incidents", value: stats?.active_incidents?.toString() ?? "7", unit: "live", trend: "+1", good: false, icon: <Icons.Triangle size={14} /> },
-    { label: "Open alerts", value: stats?.alert_count?.toString() ?? "23", unit: "today", trend: "-4", good: true, icon: <Icons.Bell size={14} /> },
-    { label: "Monitored segments", value: stats?.monitored_segments?.toString() ?? "12", unit: "of 15", trend: "OK", good: true, icon: <Icons.Layer size={14} /> },
+  const kpis: Array<{
+    label: string;
+    value: string;
+    unit: string;
+    trend: string;
+    good: boolean;
+    icon: React.ReactNode;
+    intensity: number;
+    tone: "accent" | "danger" | "success" | "warning" | "info";
+  }> = [
+    { label: "Avg speed",          value: stats?.avg_speed_kmh?.toFixed(0) ?? "26",        unit: "km/h",  trend: "+2%", good: true,  icon: <Icons.Car size={14} />,      intensity: 100 - (stats?.avg_speed_kmh ?? 26), tone: "success" },
+    { label: "Active incidents",   value: stats?.active_incidents?.toString() ?? "7",     unit: "live",   trend: "+1",  good: false, icon: <Icons.Triangle size={14} />, intensity: (stats?.active_incidents ?? 7) * 10, tone: "danger"  },
+    { label: "Open alerts",        value: stats?.alert_count?.toString() ?? "23",         unit: "today",  trend: "-4",  good: true,  icon: <Icons.Bell size={14} />,     intensity: (stats?.alert_count ?? 23) * 3,      tone: "warning" },
+    { label: "Monitored segments", value: stats?.monitored_segments?.toString() ?? "12",  unit: "of 15",  trend: "OK",  good: true,  icon: <Icons.Layer size={14} />,    intensity: 60,                                  tone: "accent"  },
   ];
 
   return (
@@ -91,7 +105,7 @@ export default function DashboardPage() {
       >
         <div>
           <div className="t-section">Command Center · Delhi NCR</div>
-          <div className="t-hero" style={{ marginTop: 6 }}>Traffic Management</div>
+          <div className="t-hero" style={{ marginTop: 6 }}>AI-powered Traffic Congestion Predictor</div>
           <div className="t-meta" style={{ marginTop: 10, maxWidth: 540 }}>
             Live ML-powered congestion forecast across 15 corridors, 4 highways, 12 junctions.
             Click any road on the map to query live traffic flow.
@@ -169,6 +183,12 @@ export default function DashboardPage() {
                 <span className="t-stat tabular">{k.value}</span>
                 <span className="t-meta">{k.unit}</span>
               </div>
+              <KpiHeatmap
+                label={k.label}
+                value={Math.max(10, Math.min(100, k.intensity))}
+                tone={k.tone}
+                showLegend={false}
+              />
             </Card>
           </motion.div>
         ))}
@@ -347,16 +367,24 @@ export default function DashboardPage() {
 }
 
 function SegmentGrid() {
-  const [segs, setSegs] = useState<Array<{ id: number; name: string; segment_type: string; lanes: number; speed_limit_kmh: number }>>([]);
+  const FALLBACK = [
+    { id: 1, name: "MG Road Corridor", segment_type: "corridor", lanes: 4, speed_limit_kmh: 50 },
+    { id: 2, name: "Ring Road North",  segment_type: "arterial", lanes: 3, speed_limit_kmh: 60 },
+    { id: 3, name: "NH-48 Gurgaon",    segment_type: "highway",  lanes: 6, speed_limit_kmh: 80 },
+    { id: 4, name: "DND Flyway",       segment_type: "highway",  lanes: 4, speed_limit_kmh: 70 },
+    { id: 5, name: "Noida Expy",       segment_type: "highway",  lanes: 6, speed_limit_kmh: 80 },
+    { id: 6, name: "IFFCO Chowk Jn",   segment_type: "junction", lanes: 4, speed_limit_kmh: 40 },
+  ];
+  const [segs, setSegs] = useState<Array<{ id: number; name: string; segment_type: string; lanes: number; speed_limit_kmh: number }>>(FALLBACK);
   useEffect(() => {
-    fetch("/api/segments", { cache: "no-store" }).then((r) => r.json()).then(setSegs).catch(() => setSegs([
-      { id: 1, name: "MG Road Corridor", segment_type: "corridor", lanes: 4, speed_limit_kmh: 50 },
-      { id: 2, name: "Ring Road North",  segment_type: "arterial", lanes: 3, speed_limit_kmh: 60 },
-      { id: 3, name: "NH-48 Gurgaon",    segment_type: "highway",  lanes: 6, speed_limit_kmh: 80 },
-      { id: 4, name: "DND Flyway",       segment_type: "highway",  lanes: 4, speed_limit_kmh: 70 },
-      { id: 5, name: "Noida Expy",       segment_type: "highway",  lanes: 6, speed_limit_kmh: 80 },
-      { id: 6, name: "IFFCO Chowk Jn",   segment_type: "junction", lanes: 4, speed_limit_kmh: 40 },
-    ]));
+    fetch("/api/segments", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        // Backend may return { error: "backend_unreachable", ... } as JSON
+        // with a 502 — never let that bleed into the grid.
+        if (Array.isArray(data) && data.length > 0) setSegs(data);
+      })
+      .catch(() => { /* keep FALLBACK */ });
   }, []);
 
   return (

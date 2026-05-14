@@ -1,11 +1,12 @@
 // TrafficBot -- floating chat that streams from the Groq-backed /api/chat.
+// LLM-first: every reply comes from the Llama 3.3 model with live DB context
+// and the last few turns of conversation passed in so follow-ups stay coherent.
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Icons } from "./icons";
 import { api } from "@/lib/api";
-import { CHATBOT_CANNED } from "@/lib/data";
 import type { ChatMessage } from "@/lib/types";
 
 const SUGGESTIONS = [
@@ -50,6 +51,18 @@ export function TrafficBot() {
   const submit = async (text?: string) => {
     const userText = (text ?? input).trim();
     if (!userText || streaming) return;
+
+    // Build the history we'll send to the LLM from the existing thread.
+    // We strip the very first synthetic greeting so the model isn't
+    // primed by a templated line.
+    const history = messages
+      .filter((m, idx) => !(idx === 0 && m.who === "bot"))
+      .map((m) => ({
+        role: (m.who === "user" ? "user" : "assistant") as "user" | "assistant",
+        content: m.text,
+      }))
+      .filter((t) => t.content.trim().length > 0);
+
     setMessages((m) => [...m, { id: Date.now(), who: "user", text: userText }]);
     setInput("");
 
@@ -58,21 +71,20 @@ export function TrafficBot() {
     setMessages((m) => [...m, { id: botId, who: "bot", text: "" }]);
 
     try {
-      await api.chatStream(userText, (_chunk, acc) => {
-        setMessages((m) => m.map((x) => (x.id === botId ? { ...x, text: acc } : x)));
-      });
+      await api.chatStream(
+        userText,
+        (_chunk, acc) => {
+          setMessages((m) => m.map((x) => (x.id === botId ? { ...x, text: acc } : x)));
+        },
+        history,
+      );
     } catch {
-      const reply = CHATBOT_CANNED[Math.floor(Math.random() * CHATBOT_CANNED.length)];
-      let i = 0;
-      await new Promise<void>((resolve) => {
-        const tick = () => {
-          i += 2 + Math.floor(Math.random() * 3);
-          setMessages((m) => m.map((x) => (x.id === botId ? { ...x, text: reply.slice(0, i) } : x)));
-          if (i < reply.length) window.setTimeout(tick, 18);
-          else resolve();
-        };
-        window.setTimeout(tick, 200);
-      });
+      // Truly LLM-first: if the API is unreachable, tell the user instead
+      // of substituting a hardcoded canned reply. No silent imposter text.
+      const err =
+        "I can't reach my live data stream right now — the backend looks offline. " +
+        "Start it with `uvicorn main:app --port 8000` and ask me again.";
+      setMessages((m) => m.map((x) => (x.id === botId ? { ...x, text: err } : x)));
     } finally {
       setStreaming(false);
     }
@@ -87,8 +99,9 @@ export function TrafficBot() {
         onClick={() => setOpen((o) => !o)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        className={`traffic-bot-launcher ${open ? "" : "glow-pulse"}`}
         style={{
-          position: "fixed", right: 22, bottom: 22, zIndex: 60,
+          position: "fixed", right: 22, bottom: 22, zIndex: 80,
           width: 60, height: 60, borderRadius: "50%",
           background: "linear-gradient(135deg, var(--accent), #c45a18)",
           border: "1px solid var(--accent)",
@@ -96,7 +109,6 @@ export function TrafficBot() {
           display: "grid", placeItems: "center",
           color: "#0C0C0D", cursor: "pointer",
         }}
-        className={open ? "" : "glow-pulse"}
         title="Ask TrafficBot"
       >
         {open ? <Icons.Close size={20} /> : <Icons.Sparkles size={22} />}
@@ -105,12 +117,13 @@ export function TrafficBot() {
       <AnimatePresence>
         {open && (
           <motion.div
+            className="traffic-bot-panel"
             initial={{ opacity: 0, y: 12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
             style={{
-              position: "fixed", right: 22, bottom: 96, zIndex: 59,
+              position: "fixed", right: 22, bottom: 96, zIndex: 79,
               width: 400, maxWidth: "calc(100vw - 44px)",
               height: 580, maxHeight: "calc(100vh - 140px)",
               background: "var(--bg-glass-strong)",

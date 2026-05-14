@@ -108,15 +108,15 @@ export function Gauge({ value }: { value: number }) {
   const data = [{ name: "risk", value: v, fill: color }];
 
   return (
-    <div style={{ position: "relative", width: 160, height: 130 }}>
+    <div style={{ position: "relative", width: 160, height: 160 }}>
       <ResponsiveContainer width="100%" height="100%">
         <RadialBarChart
           data={data}
-          innerRadius={48}
-          outerRadius={64}
+          innerRadius={52}
+          outerRadius={68}
           startAngle={225}
           endAngle={-45}
-          barSize={7}
+          barSize={8}
         >
           <RadialBar
             background={{ fill: "#1E1E20" }}
@@ -127,18 +127,21 @@ export function Gauge({ value }: { value: number }) {
           />
         </RadialBarChart>
       </ResponsiveContainer>
+      {/* Absolutely-centered label stack — uses the SVG's geometric center,
+          not the bottom-heavy default of grid place-items. */}
       <div
         style={{
-          position: "absolute", inset: 0, display: "grid", placeItems: "center",
-          flexDirection: "column", pointerEvents: "none",
+          position: "absolute", inset: 0,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          pointerEvents: "none",
+          transform: "translateY(-6px)",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 18 }}>
-          <span className="t-stat-sm tabular" style={{ color }}>{v}</span>
-          <span style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-            {sevLabel} Risk
-          </span>
-        </div>
+        <span className="t-stat-sm tabular" style={{ color, lineHeight: 1 }}>{v}</span>
+        <span style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+          {sevLabel} Risk
+        </span>
       </div>
     </div>
   );

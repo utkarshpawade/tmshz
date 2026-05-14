@@ -118,13 +118,16 @@ export const api = {
       body: JSON.stringify(body),
     }).then(j),
 
-  routes: (origin?: string, destination?: string) => {
-    const qs = new URLSearchParams();
-    if (origin) qs.set("origin", origin);
-    if (destination) qs.set("destination", destination);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
-    return fetch(`${BFF}/routes${suffix}`, { cache: "no-store" }).then(j);
-  },
+  routes: (origin?: string, destination?: string) =>
+    fetch(`${BFF}/routes`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        origin: origin || "Connaught Place, Delhi",
+        destination: destination || "Cyber City, Gurgaon",
+      }),
+      cache: "no-store",
+    }).then(j),
 
   predict: (body: { segment_id: number } & Record<string, unknown>) =>
     fetch(`${BFF}/predict`, {
@@ -167,11 +170,12 @@ export const api = {
   chatStream: async (
     message: string,
     onChunk: (chunk: string, accumulated: string) => void,
+    history?: { role: "user" | "assistant"; content: string }[],
   ): Promise<string> => {
     const r = await fetch(`${BFF}/chat`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, history: history ?? [] }),
     });
     if (!r.ok || !r.body) throw new Error(`${r.status} ${r.statusText}`);
     const reader = r.body.getReader();
