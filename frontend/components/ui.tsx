@@ -125,6 +125,10 @@ export function Logo() {
           </g>
         </svg>
       </span>
+      <span className="logo-word">
+        <span className="logo-name">VeloCT</span>
+        <span className="logo-sub">AI-powered Traffic Congestion Predictor</span>
+      </span>
     </div>
   );
 }

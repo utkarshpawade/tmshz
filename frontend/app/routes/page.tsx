@@ -20,12 +20,20 @@ export default function RoutesPage() {
   const [busy, setBusy] = useState(false);
 
   const fetchRoutes = (origin: string, destination: string) => {
+    if (!origin.trim() || !destination.trim()) {
+      toast("Enter both an origin and a destination", "danger");
+      return;
+    }
     setBusy(true);
     api.routes(origin, destination)
       .then((res) => {
         const data = res as { routes?: RouteOption[] };
-        if (data.routes && data.routes.length > 0) setRoutes(data.routes);
-        toast(`Routes compared — ${origin.split(",")[0]} → ${destination.split(",")[0]}`, "success");
+        if (data.routes && data.routes.length > 0) {
+          setRoutes(data.routes);
+          toast(`Routes compared — ${origin.split(",")[0]} → ${destination.split(",")[0]}`, "success");
+        } else {
+          toast("No driving routes found between those places", "danger");
+        }
       })
       .catch(() => toast("Backend unreachable — using cached routes", "danger"))
       .finally(() => setBusy(false));
@@ -59,12 +67,22 @@ export default function RoutesPage() {
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <div className="search" style={{ width: 320 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)" }} />
-            <input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="From" />
+            <input
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") fetchRoutes(from, to); }}
+              placeholder="From — e.g. Karol Bagh, AIIMS, Saket"
+            />
           </div>
           <div style={{ color: "var(--text-tertiary)" }}><Icons.ArrowR size={14} /></div>
           <div className="search" style={{ width: 320 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)" }} />
-            <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="To" />
+            <input
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") fetchRoutes(from, to); }}
+              placeholder="To — e.g. Noida Sector 18, Greater Kailash"
+            />
           </div>
           <button className="btn btn-primary" onClick={() => fetchRoutes(from, to)} disabled={busy}>
             <Icons.Route size={14} /> {busy ? "Comparing…" : "Compare Routes"}

@@ -14,22 +14,37 @@ from db.database import query_all, query_one
 from services import repo
 
 
-SYSTEM_PROMPT = """You are TrafficBot, the dispatch assistant for a Delhi NCR smart traffic
-command center. You have direct access to live sensor readings, ML-based
-congestion forecasts (XGBoost, 45-min lookahead), and active alerts.
+SYSTEM_PROMPT = """You are TrafficBot, the AI dispatch assistant for VeloCT — a Delhi NCR
+smart traffic command center. You have direct access to live sensor
+readings, ML-based congestion forecasts (XGBoost, 45-min lookahead),
+and active alerts via CONTEXT_JSON below.
 
-STYLE:
-- Concise (1-3 sentences). No greetings or fluff. No emojis.
-- Always speak in present tense and use rupees (Rs.) + km/h where relevant.
-- When you cite a road, occupancy, speed, or risk, pull it from the
-  CONTEXT_JSON that the system gives you below. Do NOT invent numbers.
-- If the user asks about a road that is not in CONTEXT_JSON, say so plainly
-  and recommend the closest match you do have.
+PERSONALITY:
+- Warm but professional. Speak naturally — you can banter, acknowledge
+  greetings, and answer follow-ups in context. Don't sound like a form.
+- Vary your phrasing across turns. No repetitive openers.
+- No emojis, no markdown headings. Use sentences a human would speak.
+
+KNOWLEDGE & GROUNDING:
+- When you cite a road, speed, occupancy, ETA, toll, or risk score, pull
+  it from CONTEXT_JSON. Do NOT invent numbers.
+- If asked about something outside CONTEXT_JSON, say so plainly, then
+  offer the closest live data you do have.
+- Use rupees (Rs.) and km/h where relevant; present tense; concise
+  (1-4 sentences for a normal answer, longer only when explicitly asked).
+
+CONVERSATIONAL BEHAVIOR:
+- If the user just says hello / hi / hey / thanks etc., respond in kind
+  in ONE friendly line, then offer one specific thing you can help with
+  (e.g. "Want a status check on MG Road, or the city-wide risk?").
+- If they ask a vague question ("what's up?"), give a one-line city
+  pulse pulled from CONTEXT_JSON.
 - For route requests, prefer the AI Recommended option and explain why
-  (saves X min, avoids surge at Y).
+  it wins (saves X min, avoids the surge at Y).
 - For alerts, summarise severity + cause + recommended action.
+- For multi-turn questions, remember context from earlier turns.
 
-You are speaking to a dispatch operator, not the general public. Be direct.
+You are speaking to a dispatch operator, not the general public.
 """
 
 
@@ -150,9 +165,13 @@ def _rule_based_reply(message: str, ctx: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # Groq-backed reply (preferred)
 # ---------------------------------------------------------------------------
-async def stream_reply(message: str) -> AsyncIterator[str]:
+async def stream_reply(
+    message: str,
+    history: list[dict[str, str]] | None = None,
+) -> AsyncIterator[str]:
     """Yield reply chunks. Uses Groq if configured, else rule-based."""
     ctx = _build_context()
+    history = history or []
 
     if not settings.has_groq:
         # Stream the rule-based reply word-by-word for a consistent UX
@@ -187,15 +206,22 @@ async def stream_reply(message: str) -> AsyncIterator[str]:
 
     system_msg = SYSTEM_PROMPT + "\n\nCONTEXT_JSON:\n" + json.dumps(compact_ctx, default=str)
 
+    # Build the message list with the last ~6 turns of conversation history,
+    # so the model can answer follow-ups in context.
+    messages: list[dict[str, str]] = [{"role": "system", "content": system_msg}]
+    for turn in history[-6:]:
+        role = turn.get("role")
+        content = (turn.get("content") or "").strip()
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": message})
+
     try:
         stream = await client.chat.completions.create(
             model=settings.groq_model,
-            messages=[
-                {"role": "system", "content": system_msg},
-                {"role": "user", "content": message},
-            ],
-            temperature=0.2,
-            max_tokens=300,
+            messages=messages,
+            temperature=0.55,
+            max_tokens=350,
             stream=True,
         )
         async for chunk in stream:

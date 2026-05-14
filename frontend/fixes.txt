@@ -1,8 +1,9 @@
-1. The background isnt interactive and the map looks AI generated and also it looks fake. I want real map which shows real locations and zoomable draggable and i should be able to know the traffic of that place by clicking the traffic filter. Ask for any APIs you want to implement this.
-2. No button is working on the website and no utility is defined. I want all the utilities to be working from the smallest ones to the important ones, all of them. 
-3. Also the chatbot is hardcoded. I want to it to be really working ask for any llm api for it but train and design it according to this application only
-4. The whole website is just stuck on one static page (it is not scrollable). Generate it fully and with every detail that should look proper with context to the whole application.
-5. Add animations wherever required
-6. Make the website smooth and the UI should be proper with every div and element to properly placed so that the UI looks clean.
-7. The analytics page is not working. The AI models and other ML Models are not working. I have a dataset of 7k data entries on which i can train the model.
-8. Fix the backend. Check every backend route is it working or not. Check its connectivity with the supabase.
+1. rename the app to VeloCT and also below in subscript Traffic Management System.
+2. I want the map component to be fixed right now it is coming on top of navbar on every page when i am scrolling down.fix it.
+3. The chatbot is still giving hardcoded responses i want organic responses to queries and apt answers for preset questions and good responses for new questions too using llm api intelligence. give preference more to llm api than hard coded.
+4. The toast should be fixed as right now it is only coming in random bottom right. show it beautifully with animation.
+5. Also, the typography should be good of titles and the text, maybe bold italics for titles. also include some gsap animations on overall website.
+6. also there should be beautiful heatmaps for KPIs 
+7. remove the arrow icons on div's top right corners.
+8. also redesign the mobile version fully with the claude design link i am providing and dont disturb the web version while doing it: Fetch this design file, read its readme, and implement the relevant aspects of the design. https://api.anthropic.com/v1/design/h/xlnCX9Jm_8iOvtC0U08ksA?open_file=Mobile+Traffic+Management.html
+Implement: Mobile Traffic Management.html 

@@ -17,6 +17,7 @@ node_modules/
 out/
 npm-debug.log*
 frontend/.env*.local
+frontend/tsconfig.tsbuildinfo
 
 # os / editor
 .DS_Store
