@@ -2,7 +2,11 @@
 // All Next handlers proxy through here so FASTAPI_URL is set in one place.
 // Only imported by app/api/**/route.ts files — never reaches the client bundle.
 
-export const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
+// Strip any trailing slash(es) so a value like "https://api.example.com/"
+// doesn't produce a double-slash URL ("...com//api/heatmap") that the
+// backend would 404. This makes the env var forgiving either way.
+export const FASTAPI_URL = (process.env.FASTAPI_URL || "http://localhost:8000")
+  .replace(/\/+$/, "");
 
 const passThrough = (r: Response, fallbackType = "application/json") =>
   new Response(r.body, {
