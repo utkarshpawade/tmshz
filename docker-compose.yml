@@ -1,0 +1,33 @@
+# ============================================================
+# AI Traffic Congestion Predictor -- one-command startup
+#   docker-compose up --build
+#
+# The database is hosted on Supabase (project: traffic-management),
+# so there is no local postgres container -- set DATABASE_URL in .env.
+# Redis / MongoDB are intentionally omitted (not needed for the demo).
+# ============================================================
+services:
+  backend:
+    build: ./backend
+    container_name: traffic-backend
+    env_file: .env
+    environment:
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: traffic-frontend
+    env_file: .env
+    environment:
+      # BFF route handlers (server-side) call FastAPI inside the compose network.
+      FASTAPI_URL: http://backend:8000
+      # The WebSocket is opened from the browser, so it must hit the host.
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
