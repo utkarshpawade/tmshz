@@ -1,0 +1,8 @@
+1. The background isnt interactive and the map looks AI generated and also it looks fake. I want real map which shows real locations and zoomable draggable and i should be able to know the traffic of that place by clicking the traffic filter. Ask for any APIs you want to implement this.
+2. No button is working on the website and no utility is defined. I want all the utilities to be working from the smallest ones to the important ones, all of them. 
+3. Also the chatbot is hardcoded. I want to it to be really working ask for any llm api for it but train and design it according to this application only
+4. The whole website is just stuck on one static page (it is not scrollable). Generate it fully and with every detail that should look proper with context to the whole application.
+5. Add animations wherever required
+6. Make the website smooth and the UI should be proper with every div and element to properly placed so that the UI looks clean.
+7. The analytics page is not working. The AI models and other ML Models are not working. I have a dataset of 7k data entries on which i can train the model.
+8. Fix the backend. Check every backend route is it working or not. Check its connectivity with the supabase.
