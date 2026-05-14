@@ -30,13 +30,23 @@ def _load_artifacts() -> tuple[Any, dict] | None:
     return joblib.load(model_path), joblib.load(prep_path)
 
 
-@lru_cache(maxsize=1)
+_METRICS_CACHE: tuple[float, dict] | None = None
+
 def _load_metrics() -> dict:
+    """Re-read the metrics JSON whenever the file mtime changes, so editing
+    dataset_metrics.json takes effect on the next request without a uvicorn
+    restart. (Previously this was @lru_cache'd and pinned to the first read.)"""
+    global _METRICS_CACHE
     p = ARTIFACT_DIR / "dataset_metrics.json"
     if not p.exists():
         return {}
     try:
-        return json.loads(p.read_text())
+        mtime = p.stat().st_mtime
+        if _METRICS_CACHE and _METRICS_CACHE[0] == mtime:
+            return _METRICS_CACHE[1]
+        data = json.loads(p.read_text())
+        _METRICS_CACHE = (mtime, data)
+        return data
     except Exception:
         return {}
 
