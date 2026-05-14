@@ -29,16 +29,14 @@ export function MapLayer() {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!ref.current || window.__mapInitialised) return;
-    window.__mapInitialised = true;
+    if (!ref.current || window.__mapInstance) return;
 
-    let cancelled = false;
     let animTimer: ReturnType<typeof setInterval> | undefined;
     let onResize: (() => void) | undefined;
 
     (async () => {
       const L = (await import("leaflet")).default;
-      if (cancelled || !ref.current) return;
+      if (!ref.current || window.__mapInstance) return;
 
       const map = L.map(ref.current, {
         center: DELHI_CENTER,
@@ -186,7 +184,6 @@ export function MapLayer() {
     })();
 
     return () => {
-      cancelled = true;
       if (animTimer) clearInterval(animTimer);
       if (onResize) window.removeEventListener("resize", onResize);
       // Singleton: keep the map alive across React re-renders. Only the
