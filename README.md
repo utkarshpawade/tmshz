@@ -40,7 +40,7 @@
 
 ## Overview
 
-**VeloCT** is an end-to-end smart-traffic system built to the brief in [PROBLEM STATEMENT.pdf](PROBLEM%20STATEMENT.pdf): predict urban congestion **30–60 minutes in advance**, identify high-risk zones, recommend alternative routes (including NHAI-style **toll intelligence**), grant priority corridors to emergency vehicles, and surface everything through a live operator dashboard and a conversational chatbot.
+**VeloCT** is an end-to-end smart-traffic system built to predict urban congestion **30–60 minutes in advance**, identify high-risk zones, recommend alternative routes (including NHAI-style **toll intelligence**), grant priority corridors to emergency vehicles, and surface everything through a live operator dashboard and a conversational chatbot.
 
 The system addresses three failure modes of conventional traffic management:
 
