@@ -8,7 +8,6 @@
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.1-EB6E1F)](https://xgboost.ai/)
 [![PostgreSQL](https://img.shields.io/badge/Postgres-Supabase-336791?logo=postgresql)](https://supabase.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-Unlicensed-lightgrey)](#license--credits)
 
 ---
 
@@ -31,10 +30,6 @@
 - [Docker / Production Deployment](#docker--production-deployment)
 - [Environment Variables](#environment-variables)
 - [ML Model Details](#ml-model-details)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [Troubleshooting](#troubleshooting)
-- [License & Credits](#license--credits)
 
 ---
 
