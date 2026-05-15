@@ -5,4 +5,5 @@ __pycache__/
 venv/
 .pytest_cache/
 ml/artifacts/*.pkl
-ml/artifacts/*.joblib
+# .joblib model artifacts are intentionally kept — the deployed backend
+# loads them at runtime to serve predictions without retraining.

@@ -9,7 +9,9 @@ __pycache__/
 venv/
 .pytest_cache/
 backend/ml/artifacts/*.pkl
-backend/ml/artifacts/*.joblib
+# NOTE: the trained .joblib model artifacts ARE committed on purpose —
+# they're needed in the Docker image so the deployed backend can serve
+# predictions without retraining on every cold start.
 
 # node / next
 node_modules/
